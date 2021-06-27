@@ -20,3 +20,5 @@ export const StockList = [
         portfolio_weight: 50
     }
 ];
+
+export const maxUnits = 1000;

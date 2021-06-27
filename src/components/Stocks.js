@@ -16,9 +16,9 @@ const Stocks = ({ data: { stocks, sumValue, sumPercent } }) => {
                         <TableCell>Stock</TableCell>
                         <TableCell>Sector</TableCell>
                         <TableCell>Units</TableCell>
-                        <TableCell>Price</TableCell>
-                        <TableCell>Value</TableCell>
-                        <TableCell>Portfolio Weight</TableCell>
+                        <TableCell>Price($)</TableCell>
+                        <TableCell>Value($)</TableCell>
+                        <TableCell>Portfolio Weight(%)</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -31,12 +31,12 @@ const Stocks = ({ data: { stocks, sumValue, sumPercent } }) => {
                         </TableCell>
                         <TableCell>{row.price}</TableCell>
                         <TableCell title={row.value}><span className="ellipsis-text">{row.value}</span></TableCell>
-                        <TableCell>{`${row.portfolio_weight} %`}</TableCell>
+                        <TableCell>{`${row.portfolio_weight}`}</TableCell>
                     </TableRow>))}
                     {sumValue ? <TableRow>
                         <TableCell colSpan={4} />
                         <TableCell>{sumValue}</TableCell>
-                        <TableCell>{sumPercent} %</TableCell>
+                        <TableCell>{sumPercent}</TableCell>
                     </TableRow> : null}
                 </TableBody>
             </Table>
