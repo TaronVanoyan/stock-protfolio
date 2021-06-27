@@ -1,27 +1,28 @@
 import React, { useCallback, useEffect, useState } from "react";
 
 // Styling
-import { List, ListItem, ListItemText, Typography } from "@material-ui/core";
-import InfoIcon from '@material-ui/icons/Info';
 import "./App.css";
 
-import { calculatePercentage, generateInteger, toOppositeSign } from "./helpers/utils";
+import { calculatePercentage, generateInteger, roundNumber, toOppositeSign } from "./helpers/utils";
 import ConfigurationModal from "./components/ConfigurationModal";
-import { StockList } from "./contstants/stocks";
+import InformationMessage from "./components/InformationMessage";
+import { StockList } from "./constants/stocks";
 import Stocks from "./components/Stocks";
 
 function App() {
     const [state, setState] = useState({
         stocks: StockList,
         sumValue: 0,
-        isBalanced: false
+        sumPercent: 0,
+        isPriceChanged: false
     });
     const [openModal, setOpenModal] = useState(false);
 
-    const changePrice = useCallback(() => {
-        let totalValue = 0;
+    const changePrice = useCallback((isCalculateStock) => {
+        let totalValue = 0,
+            totalPercent = 0;
 
-        const stocks = state.stocks.map((stock, index) => {
+        const stocks = state.stocks.map(stock => {
             const price = generateInteger();
             const value = stock.units * price;
             totalValue += value;
@@ -34,35 +35,25 @@ function App() {
         });
 
         const updatedStocks = stocks.map(stock => {
+            let percent = calculatePercentage(stock.value, totalValue);
+            totalPercent += percent;
+
             return {
                 ...stock,
-                portfolio_weight: calculatePercentage(stock.value, totalValue)
-            }
+                portfolio_weight: percent
+            };
         });
 
-        setState({
+        setState(prevState => ({
+            ...prevState,
             stocks: updatedStocks,
             sumValue: totalValue,
-            isBalanced: false
-        })
+            sumPercent: roundNumber(totalPercent),
+            isPriceChanged: isCalculateStock
+        }));
     }, [state.stocks]);
 
-    const onSave = useCallback((percentages) => {
-        const stocks = state.stocks.map(stock => {
-            return {
-                ...stock,
-                percentage: percentages[stock.id]
-            }
-        });
-
-        setState({
-            ...state,
-            isBalanced: false,
-            stocks
-        });
-    }, [state]);
-
-    const calculateBalancingStocks = () => {
+    const calculateStock = useCallback(() => {
         const stocks = state.stocks.map(stock => {
             const value = (state.sumValue / 100) * stock.percentage;
             const countOfUnits = (stock.value - value) / stock.price;
@@ -76,41 +67,37 @@ function App() {
                 portfolio_weight: stock.percentage
             };
         });
+
         setState(prevState => ({
             ...prevState,
-            isBalanced: true,
-            stocks
+            stocks,
+            isPriceChanged: false
         }));
-    };
+    }, [state.stocks, state.sumValue]);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => changePrice(), []);
+
+    useEffect(() => {
+        if (state.isPriceChanged) {
+            calculateStock();
+        }
+    }, [state.isPriceChanged, calculateStock]);
 
     return (
         <div className="App">
             <div className="data-table-container">
                 <Stocks data={state} />
-                <div>
-                    <List>
-                        <ListItem>
-                            <InfoIcon color="primary" style={{ fontSize: 20, marginRight: 5 }} />
-                            <ListItemText primary={<Typography style={{ fontSize: 13 }}><span className="active-text" onClick={changePrice}>Change</span> price</Typography>}/>
-                        </ListItem>
-
-                        <ListItem>
-                            <InfoIcon color="primary" style={{ fontSize: 20, marginRight: 5 }} />
-                            <ListItemText primary={<Typography style={{ fontSize: 13 }}>The calculation is made in the following percentages, which you can <span className="active-text" onClick={() => setOpenModal(true)}>change</span>։ {`${state.stocks[0].percentage} / ${state.stocks[1].percentage}`}</Typography>}/>
-                        </ListItem>
-
-                        {!state.isBalanced ? <ListItem>
-                            <InfoIcon style={{ color: "orange", fontSize: 20, marginRight: 5 }} />
-                            <ListItemText primary={<Typography style={{fontSize: 13}}>The prices was changed and you should <span className="active-text" onClick={calculateBalancingStocks}>rebalance</span> your profile weight.</Typography>} />
-                        </ListItem> : null}
-                    </List>
-                </div>
+                <InformationMessage stocks={state.stocks}
+                                    changePrice={() => changePrice(true)}
+                                    openModal={() => setOpenModal(true)} />
             </div>
 
-            {state.stocks.length ? <ConfigurationModal open={openModal} onClose={() => setOpenModal(false)} onSave={onSave} stocks={state.stocks}/> : null}
+            {state.stocks.length
+                ? <ConfigurationModal stocks={state.stocks}
+                                      open={openModal}
+                                      closeModal={() => setOpenModal(false)}
+                                      onSave={setState} />
+                : null}
         </div>
     );
 }

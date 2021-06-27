@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -7,7 +7,7 @@ import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
 import Button from '@material-ui/core/Button';
 
-const ConfigurationModal = ({ open, onSave, onClose, stocks }) => {
+const ConfigurationModal = ({ open, onSave, closeModal, stocks }) => {
     const [state, setState] = useState({});
 
     const onChangePercentage = (id, value) => {
@@ -17,31 +17,50 @@ const ConfigurationModal = ({ open, onSave, onClose, stocks }) => {
         }))
     };
 
+    const onSavePercentage = () => {
+        const updatedStocks = stocks.map(stock => {
+            return {
+                ...stock,
+                percentage: state[stock.id]
+            }
+        });
+
+        onSave(prevValue => ({
+            ...prevValue,
+            isPriceChanged: true,
+            stocks: updatedStocks
+        }));
+
+        closeModal();
+    };
+
+    useEffect(() => {
+        const newState = {};
+        stocks.forEach(stock => newState[stock.id] = stock.percentage);
+
+        setState(newState);
+    }, [stocks]);
+
     return (
-        <Dialog open={open} onClose={onClose} aria-labelledby="form-dialog-title">
+        <Dialog open={open} onClose={closeModal} aria-labelledby="form-dialog-title">
             <DialogTitle id="form-dialog-title">Configure portfolio weight</DialogTitle>
             <DialogContent>
                 {stocks.map(stock => (
                     <TextField
                         key={stock.id}
                         autoFocus
+                        fullWidth
                         margin="dense"
                         label={stock.name}
                         type="number"
                         defaultValue={stock.percentage}
-                        onChange={(event) => {
-                            onChangePercentage(stock.id, event.target.value)
-                        }}
-                        fullWidth
+                        onChange={event => onChangePercentage(stock.id, event.target.value)}
                     />
                 ))}
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose} color="default">Cancel</Button>
-                <Button onClick={() => {
-                    onClose(false);
-                    onSave(state)
-                }} color="primary">Save</Button>
+                <Button onClick={closeModal} color="default">Cancel</Button>
+                <Button onClick={onSavePercentage} color="primary">Save</Button>
             </DialogActions>
         </Dialog>
     )

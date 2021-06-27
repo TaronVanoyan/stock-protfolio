@@ -8,7 +8,7 @@ import TableRow from "@material-ui/core/TableRow";
 import Table from "@material-ui/core/Table";
 import Paper from "@material-ui/core/Paper";
 
-const Stocks = ({data: {stocks, sumValue}}) => {
+const Stocks = ({ data: { stocks, sumValue, sumPercent } }) => {
     return (<TableContainer component={Paper}>
             <Table className="data-table" aria-label="simple table">
                 <TableHead style={{backgroundColor: "#0b0b0b0d"}}>
@@ -31,12 +31,12 @@ const Stocks = ({data: {stocks, sumValue}}) => {
                         </TableCell>
                         <TableCell>{row.price}</TableCell>
                         <TableCell title={row.value}><span className="ellipsis-text">{row.value}</span></TableCell>
-                        <TableCell>{`${row.portfolio_weight}%`}</TableCell>
+                        <TableCell>{`${row.portfolio_weight} %`}</TableCell>
                     </TableRow>))}
                     {sumValue ? <TableRow>
                         <TableCell colSpan={4} />
                         <TableCell>{sumValue}</TableCell>
-                        <TableCell>100%</TableCell>
+                        <TableCell>{sumPercent} %</TableCell>
                     </TableRow> : null}
                 </TableBody>
             </Table>
